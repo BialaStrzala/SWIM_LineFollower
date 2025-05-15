@@ -1,9 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file           : main.h
-  * @brief          : Header for main.c file.
-  *                   This file contains the common defines of the application.
+  * @file    stm32f0xx_it.h
+  * @brief   This file contains the headers of the interrupt handlers.
   ******************************************************************************
   * @attention
   *
@@ -19,15 +18,12 @@
 /* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef __STM32F0xx_IT_H
+#define __STM32F0xx_IT_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* Includes ------------------------------------------------------------------*/
-#include "stm32f0xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -49,41 +45,18 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
-void Error_Handler(void);
-
+void NMI_Handler(void);
+void HardFault_Handler(void);
+void SVC_Handler(void);
+void PendSV_Handler(void);
+void SysTick_Handler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
-
-/* Private defines -----------------------------------------------------------*/
-#define BTN_Pin GPIO_PIN_0
-#define BTN_GPIO_Port GPIOA
-#define IN4_PA4_Pin GPIO_PIN_4
-#define IN4_PA4_GPIO_Port GPIOA
-#define IN3_PA5_Pin GPIO_PIN_5
-#define IN3_PA5_GPIO_Port GPIOA
-#define IN2_PA6_Pin GPIO_PIN_6
-#define IN2_PA6_GPIO_Port GPIOA
-#define IN1_PA7_Pin GPIO_PIN_7
-#define IN1_PA7_GPIO_Port GPIOA
-#define ENB_Pin GPIO_PIN_0
-#define ENB_GPIO_Port GPIOB
-#define ENA_Pin GPIO_PIN_7
-#define ENA_GPIO_Port GPIOC
-#define LED2_Pin GPIO_PIN_8
-#define LED2_GPIO_Port GPIOC
-#define LED1_Pin GPIO_PIN_9
-#define LED1_GPIO_Port GPIOC
-
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __MAIN_H */
+#endif /* __STM32F0xx_IT_H */
