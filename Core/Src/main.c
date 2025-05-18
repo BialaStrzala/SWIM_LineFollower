@@ -42,14 +42,18 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim3;
 
-/* USER CODE BEGIN PV */
+UART_HandleTypeDef huart1;
 
+/* USER CODE BEGIN PV */
+uint8_t buffer[20];
+uint16_t drivingspeed = 100;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -89,9 +93,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM3_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+  HAL_UART_Init(&huart1);
+  __HAL_UART_DISABLE(&huart1);
+  __HAL_UART_ENABLE(&huart1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -100,29 +108,17 @@ int main(void)
   {
 	  if(HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin)==1){
 		  Drive_Sequence();
-		  /*
-		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-		  Set_Speed(100);
-
-		  Go_Forward();
-		  HAL_Delay(600);
-
-
-		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-		  Go_Left();
-		  HAL_Delay(200);
-
-		  Stop();
-		  Set_Speed(0);
-		  */
-	  }
-	  else{
-		  HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
-		  HAL_Delay(200);
 	  }
 
-	//HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);
-	//HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+	    HAL_UART_Transmit(&huart1, (uint8_t *)"Hello\r\n", 7, 100);
+	    HAL_Delay(1000);
+
+	    buffer[0] = 0;
+	    HAL_UART_Receive(&huart1, buffer, 20, 100);
+	    if(buffer[0]=='w'){HAL_UART_Transmit(&huart1, "W", 6, 100);}
+	    if(buffer[0]=='s'){HAL_UART_Transmit(&huart1, "S", 6, 100);}
+	    if(buffer[0]=='a'){HAL_UART_Transmit(&huart1, "A", 6, 100);}
+	    if(buffer[0]=='d'){HAL_UART_Transmit(&huart1, "D", 6, 100);}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -138,6 +134,7 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -160,6 +157,12 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
@@ -229,6 +232,41 @@ static void MX_TIM3_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -280,72 +318,100 @@ static void MX_GPIO_Init(void)
 void Drive_Sequence(void){
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
 	Set_Speed(100);
+	HAL_Delay(2000);
+
+	Go_Forward(); //1
 	HAL_Delay(1000);
+	Stop();
+	HAL_Delay(500);
 
+	Go_Left(); //2
+	HAL_Delay(350);
+	Stop();
+	HAL_Delay(500);
 
-	Go_Forward();
+	Go_Forward(); //3
+	HAL_Delay(1000);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Left(); //4
+	HAL_Delay(350);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Forward(); //5
+	HAL_Delay(1000);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Right(); //6
+	HAL_Delay(700);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Forward(); //7
 	HAL_Delay(500);
 	Stop();
-	HAL_Delay(800);
+	HAL_Delay(500);
+
+	Go_Backward(); //8
+	HAL_Delay(500);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Left(); //9
+	HAL_Delay(350);
+	Stop();
+	HAL_Delay(500);
+
+	Go_Forward(); //10
+	HAL_Delay(500);
+	Stop();
+	HAL_Delay(500);
 
 	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
-	Go_Left();
-	HAL_Delay(800);
-	Stop();
-
-	HAL_Delay(800);
-	Go_Right();
-	HAL_Delay(200);
-	Stop();
-
-	HAL_Delay(800);
-	Go_Backward();
-	HAL_Delay(300);
-	Stop();
 }
 
 void Set_Speed(uint16_t speed){
-	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, speed);
-	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, speed);
+	drivingspeed = speed; // zmienna ustalajaca predkosc (PWM)
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, drivingspeed);
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, drivingspeed);
 }
-
-
 void Go_Forward(void){
-	Set_Speed(100);
-	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 1);
+	Set_Speed(drivingspeed);
+	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 1); // oba kola do przodu
 	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 0);
 
 	HAL_GPIO_WritePin(IN3_PA5_GPIO_Port, IN3_PA5_Pin, 1);
 	HAL_GPIO_WritePin(IN4_PA4_GPIO_Port, IN4_PA4_Pin, 0);
 }
 void Go_Left(void){
-	Set_Speed(100);
+	Set_Speed(drivingspeed);
 	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 1); // prawe do przodu
 	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 0);
 
-	HAL_GPIO_WritePin(IN3_PA5_GPIO_Port, IN3_PA5_Pin, 0); // lewe stop
-	HAL_GPIO_WritePin(IN4_PA4_GPIO_Port, IN4_PA4_Pin, 0);
-	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
+	HAL_GPIO_WritePin(IN3_PA5_GPIO_Port, IN3_PA5_Pin, 0); // lewe do tylu
+	HAL_GPIO_WritePin(IN4_PA4_GPIO_Port, IN4_PA4_Pin, 1);
 }
 void Go_Right(void){
-	Set_Speed(100);
-	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0); // prawe stop
-	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 0);
-	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
+	Set_Speed(drivingspeed);
+	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0); // prawe do tylu
+	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 1);
 
 	HAL_GPIO_WritePin(IN3_PA5_GPIO_Port, IN3_PA5_Pin, 1); // lewe do przodu
 	HAL_GPIO_WritePin(IN4_PA4_GPIO_Port, IN4_PA4_Pin, 0);
 }
 void Go_Backward(void){
-	Set_Speed(100);
-	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0);
+	Set_Speed(drivingspeed);
+	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0); // oba kola do tylu
 	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 1);
 
 	HAL_GPIO_WritePin(IN3_PA5_GPIO_Port, IN3_PA5_Pin, 0);
 	HAL_GPIO_WritePin(IN4_PA4_GPIO_Port, IN4_PA4_Pin, 1);
 }
 void Stop(void){
-	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0);
+	HAL_GPIO_WritePin(IN1_PA7_GPIO_Port, IN1_PA7_Pin, 0); // oba kola stop
 	HAL_GPIO_WritePin(IN2_PA6_GPIO_Port, IN2_PA6_Pin, 0);
 	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 0);
 
