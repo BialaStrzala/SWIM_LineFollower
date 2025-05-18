@@ -1,10 +1,10 @@
 # 🚗 Autonomiczny Pojazd z STM32
 
-Projekt semestralny z przedmiotu **Systemy Wbudowane i Mikrokontrolery**  
-Autor: Paula Grzebyk
-Numer indeksu: 21236
-Data rozpoczęcia: 7 maja 2025
-Repozytorium zawiera kod, dokumentację oraz materiały projektowe.
+- Projekt semestralny z przedmiotu **Systemy Wbudowane i Mikrokontrolery**  
+- Autor: Paula Grzebyk
+- Numer indeksu: 21236
+- Data rozpoczęcia: 7 maja 2025
+- Repozytorium zawiera kod, dokumentację oraz materiały projektowe.
 
 ---
 
