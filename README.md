@@ -48,18 +48,14 @@ Robot trójkołowy o wymiarach ok. 24x20x15cm o napędzie kołowym za pomocą dw
 
 ---
 
-## 📸 Demo i zdjęcia
+## 📄 Dokumentacja, zdjęcia i filmy
 
-Nagrania i zdjęcia: [Folder]([#](https://drive.google.com/drive/folders/1Ak4zJQ64U5y1St-GSTiknMUM3oySruRG?usp=sharing))
-
----
-
-## 📄 Dokumentacja
-
-Pełna dokumentacja projektu znajduje się w folderze [`docs/`](./docs/), w tym:
+https://drive.google.com/drive/folders/1Ak4zJQ64U5y1St-GSTiknMUM3oySruRG?usp=drive_link
+Pełna dokumentacja projektu znajduje się w powyższym linku, w tym:
 - Raport końcowy (PDF)
 - Schematy układów
 - Lista komponentów
+- Zdjęcia i filmy
 
 ---
 
