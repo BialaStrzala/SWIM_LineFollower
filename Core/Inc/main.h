@@ -77,6 +77,16 @@ void Error_Handler(void);
 #define LED2_GPIO_Port GPIOC
 #define LED1_Pin GPIO_PIN_9
 #define LED1_GPIO_Port GPIOC
+#define SENSOR_FARLEFT_Pin GPIO_PIN_6
+#define SENSOR_FARLEFT_GPIO_Port GPIOF
+#define SENSOR_LEFT_Pin GPIO_PIN_7
+#define SENSOR_LEFT_GPIO_Port GPIOF
+#define SENSOR_MIDDLE_Pin GPIO_PIN_14
+#define SENSOR_MIDDLE_GPIO_Port GPIOA
+#define SENSOR_RIGHT_Pin GPIO_PIN_15
+#define SENSOR_RIGHT_GPIO_Port GPIOA
+#define SENSOR_FARRIGHT_Pin GPIO_PIN_10
+#define SENSOR_FARRIGHT_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 
