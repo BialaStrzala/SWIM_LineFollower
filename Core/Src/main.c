@@ -45,8 +45,11 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
+uint16_t drivingspeed = 20;
 uint8_t buffer[20];
-uint16_t drivingspeed = 100;
+volatile uint8_t action_flag = 0;
+volatile uint32_t action_timeout = 0;
+uint8_t followline_flag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,7 +58,14 @@ static void MX_GPIO_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+void Set_Speed(uint16_t speed);
+void Go_Forward(void);
+void Go_Left(void);
+void Go_Right(void);
+void Go_Backward(void);
+void Stop(void);
+void Emergency_Stop(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -95,30 +105,42 @@ int main(void)
   MX_TIM3_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  HAL_UART_Receive_IT(&huart1, buffer, 1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-  HAL_UART_Init(&huart1);
-  __HAL_UART_DISABLE(&huart1);
-  __HAL_UART_ENABLE(&huart1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  // przycisk -> ustawia followline_flag = 1
 	  if(HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin)==1){
-		  Drive_Sequence();
+		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+		  HAL_Delay(2000);
+		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+		  followline_flag = 1;
 	  }
+	  // stan podazania za linia
+	  if(followline_flag == 1){
+		  HAL_Delay(80);
+		  Follow_Line();
+		  HAL_Delay(40);
+		  Stop();
+	  }
+	  // stan kontroli z bluetooth
+	  if(action_flag != 0){
+		  if(action_flag == 1) Go_Forward();
+		  else if(action_flag == 2) Go_Backward();
+		  else if(action_flag == 3) Go_Left();
+		  else if(action_flag == 4) Go_Right();
+		  else if(action_flag == 5) Emergency_Stop();
 
-	    HAL_UART_Transmit(&huart1, (uint8_t *)"Hello\r\n", 7, 100);
-	    HAL_Delay(1000);
-
-	    buffer[0] = 0;
-	    HAL_UART_Receive(&huart1, buffer, 20, 100);
-	    if(buffer[0]=='w'){HAL_UART_Transmit(&huart1, "W", 6, 100);}
-	    if(buffer[0]=='s'){HAL_UART_Transmit(&huart1, "S", 6, 100);}
-	    if(buffer[0]=='a'){HAL_UART_Transmit(&huart1, "A", 6, 100);}
-	    if(buffer[0]=='d'){HAL_UART_Transmit(&huart1, "D", 6, 100);}
+		  if(HAL_GetTick() > action_timeout){
+			  Stop();
+			  action_flag = 0;
+		  }
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -282,6 +304,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, IN4_PA4_Pin|IN3_PA5_Pin|IN2_PA6_Pin|IN1_PA7_Pin, GPIO_PIN_RESET);
@@ -289,11 +312,11 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, LED2_Pin|LED1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : BTN_Pin */
-  GPIO_InitStruct.Pin = BTN_Pin;
+  /*Configure GPIO pins : BTN_Pin SENSOR_MIDDLE_Pin SENSOR_RIGHT_Pin */
+  GPIO_InitStruct.Pin = BTN_Pin|SENSOR_MIDDLE_Pin|SENSOR_RIGHT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BTN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : IN4_PA4_Pin IN3_PA5_Pin IN2_PA6_Pin IN1_PA7_Pin */
   GPIO_InitStruct.Pin = IN4_PA4_Pin|IN3_PA5_Pin|IN2_PA6_Pin|IN1_PA7_Pin;
@@ -309,68 +332,93 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : SENSOR_FARLEFT_Pin SENSOR_LEFT_Pin */
+  GPIO_InitStruct.Pin = SENSOR_FARLEFT_Pin|SENSOR_LEFT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SENSOR_FARRIGHT_Pin */
+  GPIO_InitStruct.Pin = SENSOR_FARRIGHT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(SENSOR_FARRIGHT_GPIO_Port, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
-void Drive_Sequence(void){
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
-	Set_Speed(100);
-	HAL_Delay(2000);
+void Follow_Line(void){
+		//skret 90 w prawo
+		if(HAL_GPIO_ReadPin(SENSOR_FARRIGHT_GPIO_Port, SENSOR_FARRIGHT_Pin)==0 && HAL_GPIO_ReadPin(SENSOR_RIGHT_GPIO_Port, SENSOR_RIGHT_Pin)==0){
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+			HAL_UART_Transmit(&huart1, "FARRIGHT\r\n", 10, 100);
+			Go_Left();
+		}
+		//skret 90 w lewo
+		else if(HAL_GPIO_ReadPin(SENSOR_FARLEFT_GPIO_Port, SENSOR_FARLEFT_Pin)==0 && HAL_GPIO_ReadPin(SENSOR_LEFT_GPIO_Port, SENSOR_LEFT_Pin)==0){
+			HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);
+			HAL_UART_Transmit(&huart1, "FARLEFT\r\n", 9, 100);
+			Go_Right();
+		}
+		//right
+		else if(HAL_GPIO_ReadPin(SENSOR_RIGHT_GPIO_Port, SENSOR_RIGHT_Pin)==0){
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+			HAL_UART_Transmit(&huart1, "RIGHT\r\n", 7, 100);
+			Go_Left();
+		}
+		//left
+		else if(HAL_GPIO_ReadPin(SENSOR_LEFT_GPIO_Port, SENSOR_LEFT_Pin)==0){
+			HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);
+			HAL_UART_Transmit(&huart1, "LEFT\r\n", 6, 100);
+			Go_Right();
+		}
+		//middle
+		else if(HAL_GPIO_ReadPin(SENSOR_MIDDLE_GPIO_Port, SENSOR_MIDDLE_Pin)==0){
+			HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);
+			HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 1);
+			HAL_UART_Transmit(&huart1, "MID\r\n", 6, 100);
+			Go_Forward();
+		}
+		else{
+			HAL_UART_Transmit(&huart1, "NONE\r\n", 6, 100);
+			Go_Forward();
+		}
+		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
+		HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+}
 
-	Go_Forward(); //1
-	HAL_Delay(1000);
-	Stop();
-	HAL_Delay(500);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART1){
+    	if(buffer[0] == 'w'){
+        	HAL_UART_Transmit(&huart1, "W\n", 2, 100);
+            action_flag = 1;  // Go_Forward
+            action_timeout = HAL_GetTick() + 100;
+        }
+        else if(buffer[0] == 's'){
+        	HAL_UART_Transmit(&huart1, "S\n", 2, 100);
+            action_flag = 2;  // Go_Backward
+            action_timeout = HAL_GetTick() + 100;
+        }
+        else if(buffer[0] == 'a'){
+        	HAL_UART_Transmit(&huart1, "A\n", 2, 100);
+            action_flag = 3;  // Go_Left
+            action_timeout = HAL_GetTick() + 100;
+        }
+        else if(buffer[0] == 'd'){
+        	HAL_UART_Transmit(&huart1, "D\n", 2, 100);
+            action_flag = 4;  // Go_Right
+            action_timeout = HAL_GetTick() + 100;
+        }
+        else if(buffer[0] == 'x'){
+        	HAL_UART_Transmit(&huart1, "X\n", 2, 100);
+            action_flag = 5;  // Emergency_Stop
+        }
 
-	Go_Left(); //2
-	HAL_Delay(350);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Forward(); //3
-	HAL_Delay(1000);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Left(); //4
-	HAL_Delay(350);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Forward(); //5
-	HAL_Delay(1000);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Right(); //6
-	HAL_Delay(700);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Forward(); //7
-	HAL_Delay(500);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Backward(); //8
-	HAL_Delay(500);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Left(); //9
-	HAL_Delay(350);
-	Stop();
-	HAL_Delay(500);
-
-	Go_Forward(); //10
-	HAL_Delay(500);
-	Stop();
-	HAL_Delay(500);
-
-	HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, 0);
+        HAL_UART_Receive_IT(&huart1, buffer, 1);
+    }
 }
 
 void Set_Speed(uint16_t speed){
@@ -420,6 +468,13 @@ void Stop(void){
 	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, 0);
 
 	Set_Speed(0);
+}
+void Emergency_Stop(void){
+	for(;;){
+		Stop();
+		HAL_UART_Transmit(&huart1, (uint8_t*)"EMERGENCYSTOP\n", 14, 100);
+		HAL_Delay(200);
+	}
 }
 /* USER CODE END 4 */
 
