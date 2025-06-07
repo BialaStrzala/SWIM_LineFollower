@@ -56,7 +56,7 @@ Nagrania i zdjęcia: [Folder]([#](https://drive.google.com/drive/folders/1Ak4zJQ
 
 ## 📄 Dokumentacja
 
-Pełna dokumentacja projektu znajduje się w folderze [`Docs/`](./Docs/), w tym:
+Pełna dokumentacja projektu znajduje się w folderze [`docs/`](./docs/), w tym:
 - Raport końcowy (PDF)
 - Schematy układów
 - Lista komponentów
