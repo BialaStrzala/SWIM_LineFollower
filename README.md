@@ -4,6 +4,7 @@
 - Autor: Paula Grzebyk
 - Numer indeksu: 21236
 - Data rozpoczęcia: 7 maja 2025
+- Data zakończenia: 3 czerwca 2025
 - Repozytorium zawiera kod, dokumentację oraz materiały projektowe.
 
 ---
@@ -19,7 +20,7 @@ Robot trójkołowy o wymiarach ok. 24x20x15cm o napędzie kołowym za pomocą dw
 - **Mikrokontroler:** STM32F051R8T6
 - **IDE:** STM32CubeIDE
 - **Programowanie:** C (HAL)
-- **Sensory:** 2x Cytron Maker Reflect - Analogowy czujnik odbiciowy podczerwieni IR
+- **Sensory:** 5 czujników IR
 - **Zasilanie:** Dwa ogniwa 18650
 - **Sterownik silników:** L298N
 - **Komunikacja:** UART (Bluetooth HC-06)
@@ -34,19 +35,16 @@ Robot trójkołowy o wymiarach ok. 24x20x15cm o napędzie kołowym za pomocą dw
 - Przetwornica step-down LM2596 3,2V-35V 3A z wyświetlaczem
 - Moduł Bluetooth HC-06 ZS-040
 - Koszyk na dwa ogniwa Li-On 18650
-- 2x Cytron Maker Reflect - Analogowy czujnik odbiciowy podczerwieni IR
+- Listwa 5 czujników IR
 - Przewody
 
 ---
 
 ## ⚙️ Funkcjonalności
 
-- ✅ Napęd sterowany przez PWM z użyciem Tim3
-- Odczyt wartości z sensorów IR (linia / przeszkody) przy użyciu ADC
-- Detekcja kolizji i unikanie przeszkód
-- Sterowanie ruchem przez UART (komendy tekstowe)
+- ✅ Odczyt wartości z sensorów IR i podążanie za linią
+- ✅ Sterowanie ruchem przez Bluetooth i UART (W/S/A/D)
 - ✅ Zasilanie bateryjne – pełna autonomia
-- ✅ Regularne wersjonowanie kodu (min. 1 commit/tydzień)
 
 ---
 
@@ -70,13 +68,8 @@ Pełna dokumentacja projektu znajduje się w folderze [`Docs/`](./Docs/), w tym:
 - 7.05.2025 - rozpoczęcie prac
 - 20.05.2025 – ukończenie budowy pojazdu i zaprogramowanie prostej sekwencji jazdy
 - 27.05.2025 – ukończenie programowania podążania za linią
-- 03.06.2025 – dodatkowa funkcjonalność: sterowanie przez bluetooth 
-
----
-
-## 🧠 Wnioski
-
-_(Tutaj uzupełnij po zakończeniu projektu)_
+- 03.06.2025 – dodatkowa funkcjonalność: sterowanie przez bluetooth
+- 10.06.2025 - finalna prezentacja
 
 ---
 
